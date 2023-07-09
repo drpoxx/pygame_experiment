@@ -47,16 +47,53 @@ class Level:
             self.world_shift = 0
             player.speed = 8
 
+    def horizontal_movement_collision(self):
+        player = self.player.sprite
+        # NOTE: handle the player movement in the level not in the player class.
+        player.rect.x += player.direction.x * player.speed
+
+        for sprite in self.tiles.sprites():
+            if sprite.rect.colliderect(player.rect):
+                # Need to figure out if collision is left or right.
+                if player.direction.x < 0:
+                    # Left side collision.
+                    player.rect.left = sprite.rect.right
+                elif player.direction.x > 0:
+                    # Right side collision.
+                    player.rect.right = sprite.rect.left
+
+    def vertical_movement_collision(self):
+        player = self.player.sprite
+        # NOTE: handle the player movement in the level not in the player class.
+        player.apply_gravity()
+
+        for sprite in self.tiles.sprites():
+            if sprite.rect.colliderect(player.rect):
+                # Need to figure out if collision is left or right.
+                if player.direction.y > 0:
+                    # Bottom side collision.
+                    player.rect.bottom = sprite.rect.top
+                    # Cancel the gravity out so no buildup appears.
+                    player.direction.y = 0
+                elif player.direction.y < 0:
+                    # Top side collision.
+                    player.rect.top = sprite.rect.bottom
+                    # Cancel out any movement buildup.
+                    player.direction.y = 0
+
     def run(self):
         # ------ Tiles ------
         # Scroll through the map based on player movement as well as draw the
         # map tiles.
         self.tiles.update(self.world_shift)
         self.tiles.draw(self.display_surface)
+        self.scroll_x()
 
         # ------ Player ------
         self.player.update()
+        self.horizontal_movement_collision()
+        self.vertical_movement_collision()
         self.player.draw(self.display_surface)
-        self.scroll_x()
+        
         
 
