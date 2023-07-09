@@ -10,7 +10,10 @@ class Level:
         # Level setup.
         self.display_surface = surface 
         self.setup_level(level_data)
+        # Used for the shift of the level when moving. Default to 0.
         self.world_shift = 0
+        # Needed to store the side of the collision when the player collides with objects on the x-axis.
+        self.current_x = 0
 
     def setup_level(self, layout):
         self.tiles = pygame.sprite.Group()
@@ -58,9 +61,19 @@ class Level:
                 if player.direction.x < 0:
                     # Left side collision.
                     player.rect.left = sprite.rect.right
+                    player.on_left = True
+                    self.current_x = player.rect.left
                 elif player.direction.x > 0:
                     # Right side collision.
                     player.rect.right = sprite.rect.left
+                    player.on_left = True
+                    self.current_x = player.rect.right
+        
+        # Complicated collision logic. Player could continue run into object hence comparison with the historical collision.
+        if player.on_left and (player.rect.left < self.current_x or player.direction.x >= 0):
+            player.on_left = False
+        if player.on_right and (player.rect.right > self.current_x or player.direction.x <= 0):
+            player.on_right = False
 
     def vertical_movement_collision(self):
         player = self.player.sprite
@@ -75,11 +88,20 @@ class Level:
                     player.rect.bottom = sprite.rect.top
                     # Cancel the gravity out so no buildup appears.
                     player.direction.y = 0
+                    player.on_ground = True
                 elif player.direction.y < 0:
                     # Top side collision.
                     player.rect.top = sprite.rect.bottom
                     # Cancel out any movement buildup.
                     player.direction.y = 0
+                    player.on_ceiling = True
+
+        # Reset the status if in movement.
+        if player.on_ground and player.direction.y < 0 or player.direction.y > 1:
+            player.on_ground = False
+        if player.on_ceiling and player.direction.y > 0:
+            player.on_ceiling = False
+
 
     def run(self):
         # ------ Tiles ------
